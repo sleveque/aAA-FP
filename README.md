@@ -1,11 +1,18 @@
-The code aAA_FP implements the generalized alternating Anderson acceleration method aAA($m$)$[s]$-FP[$t$]. Specifically, given the problem
+The code aAA_FP implements the generalized alternating Anderson acceleration method aAA($m$)[ $s$ ]–FP[ $t$ ]. Specifically, given the problem
 
-g(x)=0,
+$g(x)=0$,
 
-whose solution $x^*$ solves the fixed-point iteration $q(x^*)=x^*$, aAA_FP applies s iterations of AA($m$) after performing t fixed-point iterations,
-then repeat this process until a reduction on the residual is achieved. The call to the routine is the following:
+whose solution $x^*$ solves the fixed-point iteration
+
+$q({x^*}) = {x^ *}$,
+
+aAA_FP applies $s$ iterations of AA($m$) after performing $t$ fixed-point iterations,
+then repeat this process until a reduction on the residual is achieved.
+
+The call to the routine is the following:
 
 [xnew, iter, tol, anorm_story, rnorm_story, x_story] = aAA_FP(x0, it_fp, it_aa, m, rtol, maxit, fpiter)
+
 
 Input:
 
