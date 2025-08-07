@@ -1,4 +1,4 @@
-The code aAA_FP implements the generalized alternating Anderson acceleration method aAA($m$)[$s$]-FP[$t$]. Specifically, given the problem
+The code aAA_FP implements the generalized alternating Anderson acceleration method aAA($m$)$[s]$-FP[$t$]. Specifically, given the problem
 
 g(x)=0,
 
