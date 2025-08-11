@@ -1,3 +1,12 @@
+Maltab code for the numerical examples in the following paper:
+Add arXiv link
+@article{aAAFP25,
+	title={A generalized alternating Anderson acceleration method},
+	author={He, Yunhui and Leveque, Santolo},
+	journal={arXiv preprint arXiv:XXXX},
+	year={2025}
+}
+
 The code aAA_FP implements the generalized alternating Anderson acceleration method aAA($m$)[ $s$ ]–FP[ $t$ ] to accelerate fixed-point iteration, which is a periodic
 scheme composed of $t$ fixed-point iteration steps, interleaved with $s$ steps of Anderson acceleration
 with window size m, to solve linear and nonlinear problems. Specifically, given the problem
@@ -34,3 +43,11 @@ Output:
 - anorm_story    story of the absolute tolerances
 - rnorm_story    story of the relative tolerances
 - x_story        story of the solutions at each iterate
+
+Tests: we apply aAA-FP to accelerate several types of fixed-point iterations:       
+
+        1. Jacobi iteration for $solving Ax=b$, where the coefficient matrices are from the Matrix Market repository.
+        2. Picard iteration for Navier-Stokes equations. This code is available from the authors upon request.
+        3. Alternating direction method of mulitpliers method (ADMM).
+        4. Gradient descent method for regularized logistrtic regression.
+        
