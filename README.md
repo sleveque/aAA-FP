@@ -1,4 +1,6 @@
-The code aAA_FP implements the generalized alternating Anderson acceleration method aAA($m$)[ $s$ ]–FP[ $t$ ]. Specifically, given the problem
+The code aAA_FP implements the generalized alternating Anderson acceleration method aAA($m$)[ $s$ ]–FP[ $t$ ] to accelerate fixed-point iteration, which is a periodic
+scheme composed of $t$ fixed-point iteration steps, interleaved with $s$ steps of Anderson acceleration
+with window size m, to solve linear and nonlinear problems. Specifically, given the problem
 
 $g(x)=0$,
 
