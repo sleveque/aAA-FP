@@ -2,9 +2,9 @@ Maltab code for the numerical examples in the following paper:
 Add arXiv link
 
 @article{aAAFP25,
-	title={A generalized alternating Anderson acceleration method},
+	title={A Generalized Alternating Anderson Acceleration Method},
 	author={He, Yunhui and Leveque, Santolo},
-	journal={arXiv preprint arXiv:XXXX},
+	journal={arXiv preprint arXiv:2508.10158},
 	year={2025}
 }
 
