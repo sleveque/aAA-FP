@@ -1,5 +1,5 @@
 Maltab code for the numerical examples in the following paper:
-[Add arXiv link](https://arxiv.org/abs/2508.10158)
+[https://arxiv.org/abs/2508.10158](https://arxiv.org/abs/2508.10158)
 
 @article{aAAFP25,
 	title={A Generalized Alternating Anderson Acceleration Method},
