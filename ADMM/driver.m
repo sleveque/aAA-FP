@@ -1,95 +1,109 @@
-global dim_z dim_u x_sol z_sol u_sol
+global dim_y dim_lambda x_sol y_sol lambda_sol
 
 seed = 100000;
 rng(seed)
 
-w_aAA = 0;
-aa_iter = 0;
-fp_iter = 1;
+% window for AA
+w_aAR = 10;
+% number of AA iterations
+aa_iter = 10;
+% number of FP iterations
+fp_iter = 10;
 
 tol = 1e-12;
 maxit = 1000;
 
-% num_test = 1:   TV
-% num_test = 2:   lasso
-% num_test = 3:   NNLS
 num_test = 1;
 
 % TV
 if num_test == 1
+    % dimension of the problem
     n = 1000;
-    rho = 10;
-    y = rand(n,1);
+    mu = 10;
 
+    xhat = rand(n,1);
+
+    % building matrices and rhs
     A = [-eye(n - 1), zeros(n - 1, 1)] + [zeros(n - 1, 1), eye(n-1)];
     B = - eye(n - 1);
     b = zeros(n - 1, 1);
 
-    alpha = 0.001 * norm(b, inf);
+    % regularization parameter
+    beta = 0.001 * norm(b, inf);
 
-    z0 = zeros(n - 1, 1);
-    u0 = z0;
-    dim_z = size(z0, 1);
-    dim_u = size(u0, 1);
+    % initial guess
+    y0 = zeros(n - 1, 1);
+    lambda0 = y0;
+    dim_y = size(y0, 1);
+    dim_lambda = size(lambda0, 1);
 
-    x_update = @(z, u)x_update_TV(z, u, A, rho, y);
-    z_update = @(x, u)z_update_TV(x, u, A, rho, alpha);
-    u_update = @(x, z, u)u_update_TV(x, z, u, A, B, b);
+    % updates of solutions
+    x_update = @(y, lambda)x_update_TV(y, lambda, A, mu, xhat);
+    y_update = @(x, lambda)y_update_TV(x, lambda, A, mu, beta);
+    lambda_update = @(x, y, lambda)lambda_update_TV(x, y, lambda, A, B, b);
 end
 
-% lasso
+% Lasso
 if num_test == 2
     density = 0.01;
 
+    % dimension of the problem
     m = 150;
     n = 300;
 
     lambda = 1;
-    rho = 10;
+    mu = 10;
 
     A_test = sprand(m, n, density);
 
+    % building matrices and rhs
     A = eye(n);
     B = - eye(n);
     b = zeros(n, 1);
 
-    y = rand(m, 1);
+    xhat = rand(m, 1);
 
-    z0 = zeros(n, 1);
-    u0 = zeros(n, 1);
-    dim_z = size(z0, 1);
-    dim_u = size(u0, 1);
+    % initial guess
+    y0 = zeros(n, 1);
+    lambda0 = zeros(n, 1);
+    dim_y = size(y0, 1);
+    dim_lambda = size(lambda0, 1);
 
-    x_update = @(z, u)x_update_lasso(z, u, A_test, rho, y);
-    z_update = @(x, u)z_update_lasso(x, u, rho, lambda);
-    u_update = @(x, z, u)u_update_lasso(x, z, u);
+    % updates of solutions
+    x_update = @(z, u)x_update_Lasso(z, u, A_test, mu, xhat);
+    y_update = @(x, u)y_update_Lasso(x, u, mu, lambda);
+    lambda_update = @(x, z, u)lambda_update_Lasso(x, z, u);
 end
 
 % NNLS
 if num_test == 3
     density = 0.01;
 
+    % dimension of the problem
     m = 150;
     n = 300;
 
-    rho = 2;
+    mu = 2;
 
     A_test = sprand(m, n, density);
 
+    % building matrices and rhs
     A = eye(n);
     B = - eye(n);
     b = zeros(n, 1);
 
-    y = rand(m, 1);
+    xhat = rand(m, 1);
 
-    z0 = zeros(n, 1);
-    u0 = zeros(n, 1);
-    dim_z = size(z0, 1);
-    dim_u = size(u0, 1);
+    % initial guess
+    y0 = zeros(n, 1);
+    lambda0 = zeros(n, 1);
+    dim_y = size(y0, 1);
+    dim_lambda = size(lambda0, 1);
 
-    x_update = @(z, u)x_update_NNLS(z, u, A_test, rho, y);
-    z_update = @(x, u)z_update_NNLS(x, u, rho);
-    u_update = @(x, z, u)u_update_NNLS(x, z, u);
+    % updates of solutions
+    x_update = @(z, u)x_update_NNLS(z, u, A_test, mu, xhat);
+    y_update = @(x, u)y_update_NNLS(x, u, mu);
+    lambda_update = @(x, z, u)lambda_update_NNLS(x, z, u);
 end
 
 
@@ -98,7 +112,7 @@ fprintf('\n')
 % ADMM
 fprintf('starting ADMM\n')
 tic
-[x_new, z_new, u_new, iter, res, norm_res] = ADMM(A, B, b, rho, z0, u0, tol, maxit, x_update, z_update, u_update);
+[x_new, y_new, lambda_new, iter, res, norm_res] = ADMM(y0, lambda0, tol, maxit, x_update, y_update, lambda_update);
 T_ADMM = toc;
 
 fprintf('Total ADMM iter: %i\n', iter)
@@ -107,105 +121,113 @@ fprintf('CPU time: %f\n', T_ADMM)
 
 
 fprintf('\n')
-% aAA_FP
-fprintf('Starting aAA_FP.\n')
+% aAR-FP
+fprintf('Starting aAR-FP.\n')
 
-x0 = [z0; u0];
+x0 = [y0; lambda0];
 
-ADMMfun = @(z, u)ADMM(A, B, b, rho, z, u, tol, 1, x_update, z_update, u_update);
+ADMMfun = @(z, u)ADMM(z, u, tol, 1, x_update, y_update, lambda_update);
 
 fpiterfun = @(x)fixed_point(x, ADMMfun);
 
 tic
-[x, iter_aAA_FP, relres_aAA, norm_story_aAA_FP] = aAA_FP(x0, fp_iter, aa_iter, w_aAA, tol, maxit, fpiterfun);
-T_aAA_FP=toc;
+[x, iter_aAR_FP, relres_aAR, norm_story_aAR_FP] = aAR_FP(x0, fp_iter, aa_iter, w_aAR, tol, maxit, fpiterfun);
+T_aAR_FP=toc;
 
-fprintf('Total aAA-FP iter: %i\n', iter_aAA_FP)
-fprintf('AA res: %i\n', relres_aAA)
-fprintf('CPU time: %f\n', T_aAA_FP)
+fprintf('Total aAR-FP iter: %i\n', iter_aAR_FP)
+fprintf('AA res: %i\n', relres_aAR)
+fprintf('CPU time: %f\n', T_aAR_FP)
+
+if aa_iter == 0
+    save("ADMM_TV.mat","norm_res")
+elseif fp_iter == 0
+    save("AA(10)_TV.mat","norm_story_aAR_FP")
+    else
+        save("aAA(10)[10]-FP[10]_TV.mat","norm_story_aAR_FP")
+end
 
 
 % TV
-function x_new = x_update_TV(z_old, u_old, A, rho, y)
+function x_new = x_update_TV(y_old, lambda_old, A, mu, xhat)
 
-    sqrt_rho = sqrt(rho);
+    sqrt_mu = sqrt(mu);
 
-    M = [A; 1/sqrt_rho * eye(size(y,1))];
-    rhs = [z_old - u_old; 1/sqrt_rho * y];
+    M = [A; 1/sqrt_mu * eye(size(xhat,1))];
+    rhs = [y_old - lambda_old; 1/sqrt_mu * xhat];
 
     x_new = M \ rhs;
 
 end
 
-function z_new = z_update_TV(x_new, u_old, A, rho, alpha)
+function y_new = y_update_TV(x_new, lambda_old, A, mu, beta)
 
-    h = A * x_new + u_old;
+    h = A * x_new + lambda_old;
 
-    z_new = sign(h) .* max(abs(h)-alpha/rho, zeros(size(h)));
+    y_new = sign(h) .* max(abs(h)-beta/mu, zeros(size(h)));
 end
 
-function u_new = u_update_TV(x_new, z_new, u_old, A, B, b)
-    u_new = u_old + A * x_new + B * z_new - b;
+function lambda_new = lambda_update_TV(x_new, y_new, lambda_old, A, B, b)
+    lambda_new = lambda_old + A * x_new + B * y_new - b;
 end
 
-% lasso
-function x_new = x_update_lasso(z_old, u_old, A, rho, y)
+% Lasso
+function x_new = x_update_Lasso(y_old, lambda_old, A, mu, xhat)
 
     M = A' * A;
-    M = M + rho * eye(size(M));
-    rhs = A' * y + rho * (z_old - u_old);
+    M = M + mu * eye(size(M));
+    rhs = A' * xhat + mu * (y_old - lambda_old);
 
     x_new = M \ rhs;
 
 end
 
-function z_new = z_update_lasso(x_new, u_old, rho, lambda)
+function y_new = y_update_Lasso(x_new, lambda_old, mu, beta)
 
-    h = x_new + u_old;
+    h = x_new + lambda_old;
 
-    z_new = sign(h) .* max(abs(h)-lambda/rho, zeros(size(h)));
+    y_new = sign(h) .* max(abs(h)-beta/mu, zeros(size(h)));
 end
 
-function u_new = u_update_lasso(x_new, z_new, u_old)
-    u_new = u_old + x_new - z_new;
+function lambda_new = lambda_update_Lasso(x_new, y_new, lambda_old)
+    lambda_new = lambda_old + x_new - y_new;
 end
 
 
 % NNLS
-function x_new = x_update_NNLS(z_old, u_old, A, rho, y)
+function x_new = x_update_NNLS(y_old, lambda_old, A, mu, xhat)
 
-    sqrt_rho = sqrt(2 * rho);
+    sqrt_mu = sqrt(2 * mu);
 
-    M = [A; 1/sqrt_rho * eye(size(A,2))];
-    rhs = [1/sqrt_rho * y; z_old - u_old];
+    M = [A; 1/sqrt_mu * eye(size(A,2))];
+    rhs = [1/sqrt_mu * xhat; y_old - lambda_old];
 
     x_new = M \ rhs;
 
 end
 
-function z_new = z_update_NNLS(x_new, u_old, rho)
+function y_new = y_update_NNLS(x_new, lambda_old, mu)
 
-    h = (1/rho) * (x_new + u_old);
+    h = (1/mu) * (x_new + lambda_old);
 
-    z_new = max(h, zeros(size(h)));
+    y_new = max(h, zeros(size(h)));
 end
 
-function u_new = u_update_NNLS(x_new, z_new, u_old)
-    u_new = u_old + x_new - z_new;
+function lambda_new = lambda_update_NNLS(x_new, y_new, lambda_old)
+    lambda_new = lambda_old + x_new - y_new;
 end
 
 
-% fixed point iteration
+
 function fp_x_new = fixed_point(fp_x_old, ADMMfun)
-    global dim_z dim_u x_sol z_sol u_sol
+    global dim_y dim_lambda x_sol y_sol lambda_sol
 
-    zold = fp_x_old(1 : dim_z);
-    uold = fp_x_old(dim_z + 1 : dim_z + dim_u);
+    yold = fp_x_old(1 : dim_y);
+    lambdaold = fp_x_old(dim_y + 1 : dim_y + dim_lambda);
     
-    [x_new, z_new, u_new, ~, ~, ~] = ADMMfun(zold, uold);
+    [x_new, y_new, lambda_new, ~, ~, ~] = ADMMfun(yold, lambdaold);
     x_sol = x_new;
-    z_sol = z_new;
-    u_sol = u_new;
+    y_sol = y_new;
+    lambda_sol = lambda_new;
 
-    fp_x_new = [z_new; u_new];
+    fp_x_new = [y_new; lambda_new];
 end
